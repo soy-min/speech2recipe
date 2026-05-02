@@ -24,6 +24,7 @@ speech2recipe/
 ├── js/
 │   ├── app.js          # Record page controller
 │   ├── book.js         # Book page controller
+│   ├── auth.js         # Access code gate (SHA-256, sessionStorage)
 │   ├── voice.js        # Web Speech API wrapper
 │   ├── llm.js          # Claude API integration
 │   ├── storage.js      # localStorage helpers
@@ -44,6 +45,25 @@ speech2recipe/
 Push to `main` and enable GitHub Pages in repository Settings → Pages → Source: `main / (root)`.
 
 The entire app is static — no build step required.
+
+## Access Control
+
+The recording page (`index.html`) is protected by an access code. The recipe book (`book.html`) is publicly accessible.
+
+**Default access code:** `geheim`
+
+**Changing the access code:**
+
+1. Open your browser console and run:
+   ```js
+   crypto.subtle.digest('SHA-256', new TextEncoder().encode('yournewcode'))
+     .then(b => console.log([...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')))
+   ```
+2. Copy the resulting hex string.
+3. Open `js/auth.js` and replace the value of `ACCESS_CODE_HASH` with the copied string.
+4. Commit and push — the change deploys automatically.
+
+The access code is stored as a SHA-256 hash in the source. Auth state is kept in `sessionStorage` and clears when the browser tab is closed. The recipe book page requires no authentication.
 
 ## Architecture Notes
 

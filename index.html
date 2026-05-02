@@ -70,6 +70,19 @@
     </section>
   </main>
 
+  <div id="auth-overlay" hidden>
+    <div class="auth-card">
+      <div class="auth-icon">🔒</div>
+      <h2>Zugang erforderlich</h2>
+      <p>Nur autorisierte Personen können Rezepte aufnehmen.</p>
+      <form id="auth-form">
+        <input type="password" id="auth-code" placeholder="Zugangscode" autocomplete="current-password" />
+        <button type="submit" class="primary">Anmelden</button>
+      </form>
+      <p id="auth-error" class="auth-error" hidden>Falscher Zugangscode. Bitte versuche es erneut.</p>
+    </div>
+  </div>
+
   <script type="module" src="js/app.js"></script>
 </body>
 </html>

@@ -2,6 +2,7 @@ import { VoiceRecorder } from './voice.js';
 import { structureRecipe } from './llm.js';
 import { getApiKey, saveApiKey, getLang, saveLang, saveRecipe } from './storage.js';
 import { renderRecipeCard } from './recipe-render.js';
+import { isAuthenticated, authenticate } from './auth.js';
 
 const $ = id => document.getElementById(id);
 
@@ -21,9 +22,45 @@ const resultActions = $('result-actions');
 const saveRecipeBtn = $('save-recipe-btn');
 const tryAgainBtn = $('try-again-btn');
 
+const authOverlay = $('auth-overlay');
+const authForm = $('auth-form');
+const authCodeInput = $('auth-code');
+const authError = $('auth-error');
+
 let currentRecipe = null;
 
+function showAuthOverlay() {
+  authOverlay.hidden = false;
+  authCodeInput.focus();
+}
+
+function hideAuthOverlay() {
+  authOverlay.hidden = true;
+}
+
+authForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const ok = await authenticate(authCodeInput.value);
+  if (ok) {
+    authCodeInput.value = '';
+    authError.hidden = true;
+    hideAuthOverlay();
+    initApp();
+  } else {
+    authError.hidden = false;
+    authCodeInput.select();
+  }
+});
+
 function init() {
+  if (!isAuthenticated()) {
+    showAuthOverlay();
+    return;
+  }
+  initApp();
+}
+
+function initApp() {
   const key = getApiKey();
   if (key) {
     apiKeyInput.value = key;
