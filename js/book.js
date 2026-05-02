@@ -22,7 +22,9 @@ function renderGrid(recipes) {
     const el = document.createElement('div');
     el.className = 'recipe-thumb';
     el.innerHTML = `
-      <h3>${escHtml(recipe.title)}</h3>
+      <div class="recipe-thumb-header">
+        <h3>${escHtml(recipe.title)}</h3>
+      </div>
       <div class="thumb-meta">
         ${recipe.servings ? `<span>🍽️ ${escHtml(recipe.servings)}</span>` : ''}
         ${recipe.cookTime ? `<span>🔥 ${escHtml(recipe.cookTime)}</span>` : ''}
