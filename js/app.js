@@ -66,6 +66,8 @@ function initApp() {
   if (key) {
     apiKeyInput.value = key;
     enableRecording();
+  } else {
+    document.querySelector('#settings-panel details').open = true;
   }
   const lang = getLang();
   if (lang) langSelect.value = lang;

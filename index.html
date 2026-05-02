@@ -25,28 +25,6 @@
   </header>
 
   <main>
-    <section class="settings-panel" id="settings-panel">
-      <details>
-        <summary>⚙️ Settings</summary>
-        <div class="settings-content">
-          <label for="api-key">Anthropic API Key</label>
-          <input type="password" id="api-key" placeholder="sk-ant-..." autocomplete="off" />
-          <button id="save-key">Save Key</button>
-          <p class="hint">Your key is stored locally in your browser only.</p>
-          <label for="lang-select">Language / Sprache</label>
-          <select id="lang-select">
-            <option value="auto">Auto-detect (browser language)</option>
-            <option value="de-DE">Deutsch</option>
-            <option value="en-US">English (US)</option>
-            <option value="en-GB">English (UK)</option>
-            <option value="fr-FR">Français</option>
-            <option value="es-ES">Español</option>
-            <option value="it-IT">Italiano</option>
-          </select>
-        </div>
-      </details>
-    </section>
-
     <section class="record-panel">
       <div class="mic-container">
         <p class="mic-tagline">What would you like to cook?</p>
@@ -71,6 +49,28 @@
           <button id="structure-btn" class="primary">Structure Recipe →</button>
         </div>
       </div>
+    </section>
+
+    <section class="settings-panel" id="settings-panel">
+      <details>
+        <summary>⚙️ API Key &amp; Language</summary>
+        <div class="settings-content">
+          <label for="api-key">Anthropic API Key</label>
+          <input type="password" id="api-key" placeholder="sk-ant-..." autocomplete="off" />
+          <button id="save-key">Save Key</button>
+          <p class="hint">Your key is stored locally in your browser only.</p>
+          <label for="lang-select">Language / Sprache</label>
+          <select id="lang-select">
+            <option value="auto">Auto-detect (browser language)</option>
+            <option value="de-DE">Deutsch</option>
+            <option value="en-US">English (US)</option>
+            <option value="en-GB">English (UK)</option>
+            <option value="fr-FR">Français</option>
+            <option value="es-ES">Español</option>
+            <option value="it-IT">Italiano</option>
+          </select>
+        </div>
+      </details>
     </section>
 
     <section class="result-panel" id="result-panel" hidden>
