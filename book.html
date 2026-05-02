@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Recipe Book — Speech to Recipe</title>
+  <link rel="stylesheet" href="css/styles.css" />
+  <link rel="stylesheet" href="css/book.css" />
+</head>
+<body>
+  <header>
+    <h1>📖 My Recipe Book</h1>
+    <nav>
+      <a href="index.html">Record</a>
+      <a href="book.html" class="active">Recipe Book</a>
+    </nav>
+  </header>
+
+  <main>
+    <div class="book-toolbar">
+      <input type="search" id="search" placeholder="Search recipes…" />
+      <button id="export-btn">Export HTML</button>
+    </div>
+
+    <div id="recipe-grid" class="recipe-grid">
+      <p class="empty-state" id="empty-state">No recipes yet. <a href="index.html">Record your first recipe →</a></p>
+    </div>
+  </main>
+
+  <div class="modal" id="recipe-modal" hidden>
+    <div class="modal-backdrop"></div>
+    <div class="modal-content">
+      <button class="modal-close" id="modal-close">✕</button>
+      <div id="modal-body"></div>
+    </div>
+  </div>
+
+  <script type="module" src="js/book.js"></script>
+</body>
+</html>
