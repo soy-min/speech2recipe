@@ -505,6 +505,15 @@ button:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
   box-shadow: 0 0 0 3px rgba(212, 98, 26, 0.15);
 }
 
+.auth-hint {
+  font-size: 0.8125rem !important;
+  font-weight: 500 !important;
+  background: var(--color-primary-light);
+  border: 1px solid rgba(212, 98, 26, 0.18);
+  border-radius: var(--radius-sm);
+  padding: 0.5rem 0.75rem;
+}
+
 .auth-error { color: var(--color-danger) !important; font-size: 0.8125rem !important; font-weight: 600 !important; }
 
 [hidden] { display: none !important; }
