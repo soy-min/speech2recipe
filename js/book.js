@@ -1,5 +1,5 @@
 import { getRecipes, deleteRecipe } from './storage.js';
-import { renderRecipeCard } from './recipe-render.js';
+import { renderRecipeCard, shareRecipe } from './recipe-render.js';
 
 const $ = id => document.getElementById(id);
 
@@ -63,6 +63,13 @@ function openModal(recipe) {
   modalBody.innerHTML = '';
   const card = renderRecipeCard(recipe);
   modalBody.appendChild(card);
+
+  const footer = document.createElement('div');
+  footer.className = 'modal-footer';
+  footer.innerHTML = `<button class="share-btn primary">Share ↗</button>`;
+  footer.querySelector('.share-btn').addEventListener('click', () => shareRecipe(recipe));
+  modalBody.appendChild(footer);
+
   modal.hidden = false;
   document.body.style.overflow = 'hidden';
 }

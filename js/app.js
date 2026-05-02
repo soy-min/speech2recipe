@@ -1,7 +1,7 @@
 import { VoiceRecorder } from './voice.js';
 import { structureRecipe } from './llm.js';
 import { getApiKey, saveApiKey, getLang, saveLang, saveRecipe } from './storage.js';
-import { renderRecipeCard } from './recipe-render.js';
+import { renderRecipeCard, shareRecipe } from './recipe-render.js';
 import { isAuthenticated, authenticate } from './auth.js';
 
 const $ = id => document.getElementById(id);
@@ -20,6 +20,7 @@ const loading = $('loading');
 const recipeOutput = $('recipe-output');
 const resultActions = $('result-actions');
 const saveRecipeBtn = $('save-recipe-btn');
+const shareRecipeBtn = $('share-recipe-btn');
 const tryAgainBtn = $('try-again-btn');
 
 const authOverlay = $('auth-overlay');
@@ -142,6 +143,10 @@ structureBtn.addEventListener('click', async () => {
   } finally {
     loading.hidden = true;
   }
+});
+
+shareRecipeBtn.addEventListener('click', () => {
+  if (currentRecipe) shareRecipe(currentRecipe);
 });
 
 saveRecipeBtn.addEventListener('click', () => {

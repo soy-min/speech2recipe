@@ -94,3 +94,51 @@
   border-radius: 50%;
   z-index: 1;
 }
+
+/* Modal footer with share/action buttons */
+.modal-footer {
+  position: sticky;
+  bottom: 0;
+  background: var(--color-surface);
+  border-top: 1px solid var(--color-border);
+  padding: 0.875rem 1.5rem;
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+  z-index: 1;
+}
+
+@media (max-width: 480px) {
+  /* Single-column grid on small screens */
+  .recipe-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .recipe-thumb { padding: 1rem; }
+  .thumb-actions button { min-height: 40px; }
+
+  /* Full-screen bottom-sheet modal */
+  .modal {
+    padding: 0;
+    align-items: flex-end;
+  }
+  .modal-content {
+    border-radius: var(--radius) var(--radius) 0 0;
+    max-height: 92vh;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  /* Full-width stacked footer buttons */
+  .modal-footer {
+    flex-direction: column;
+    padding: 0.875rem 1rem env(safe-area-inset-bottom, 0.875rem);
+    justify-content: stretch;
+  }
+  .modal-footer button {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    min-height: 48px;
+  }
+}
