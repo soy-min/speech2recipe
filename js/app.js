@@ -1,12 +1,13 @@
 import { VoiceRecorder } from './voice.js';
 import { structureRecipe } from './llm.js';
-import { getApiKey, saveApiKey, saveRecipe } from './storage.js';
+import { getApiKey, saveApiKey, getLang, saveLang, saveRecipe } from './storage.js';
 import { renderRecipeCard } from './recipe-render.js';
 
 const $ = id => document.getElementById(id);
 
 const apiKeyInput = $('api-key');
 const saveKeyBtn = $('save-key');
+const langSelect = $('lang-select');
 const recordBtn = $('record-btn');
 const recordStatus = $('record-status');
 const transcriptPanel = $('transcript-panel');
@@ -28,6 +29,8 @@ function init() {
     apiKeyInput.value = key;
     enableRecording();
   }
+  const lang = getLang();
+  if (lang) langSelect.value = lang;
 }
 
 function enableRecording() {
@@ -35,13 +38,21 @@ function enableRecording() {
   recordStatus.textContent = 'Press to start recording';
 }
 
+function resolvedLang() {
+  const val = langSelect.value;
+  return val === 'auto' ? (navigator.language || 'en-US') : val;
+}
+
 saveKeyBtn.addEventListener('click', () => {
   const key = apiKeyInput.value.trim();
   if (!key) return alert('Please enter a valid API key.');
   saveApiKey(key);
+  saveLang(langSelect.value);
   enableRecording();
   document.querySelector('details').removeAttribute('open');
 });
+
+langSelect.addEventListener('change', () => saveLang(langSelect.value));
 
 const recorder = new VoiceRecorder({
   onTranscript: (text, isInterim) => {
@@ -58,6 +69,7 @@ recordBtn.addEventListener('click', () => {
   if (recorder.isRecording) {
     recorder.stop();
   } else {
+    recorder.lang = resolvedLang();
     recorder.start();
   }
 });

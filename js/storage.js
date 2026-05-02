@@ -1,5 +1,6 @@
 const RECIPES_KEY = 'speech2recipe:recipes';
 const API_KEY_KEY = 'speech2recipe:apiKey';
+const LANG_KEY = 'speech2recipe:lang';
 
 export function getApiKey() {
   return localStorage.getItem(API_KEY_KEY) ?? '';
@@ -7,6 +8,14 @@ export function getApiKey() {
 
 export function saveApiKey(key) {
   localStorage.setItem(API_KEY_KEY, key);
+}
+
+export function getLang() {
+  return localStorage.getItem(LANG_KEY) ?? '';
+}
+
+export function saveLang(lang) {
+  localStorage.setItem(LANG_KEY, lang);
 }
 
 export function getRecipes() {

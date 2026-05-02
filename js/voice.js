@@ -1,7 +1,8 @@
 export class VoiceRecorder {
-  constructor({ onTranscript, onStatusChange }) {
+  constructor({ onTranscript, onStatusChange, lang }) {
     this.onTranscript = onTranscript;
     this.onStatusChange = onStatusChange;
+    this.lang = lang || navigator.language || 'en-US';
     this.recognition = null;
     this.isRecording = false;
     this.transcript = '';
@@ -21,7 +22,7 @@ export class VoiceRecorder {
     this.recognition = new SR();
     this.recognition.continuous = true;
     this.recognition.interimResults = true;
-    this.recognition.lang = 'en-US';
+    this.recognition.lang = this.lang;
 
     this.recognition.onstart = () => {
       this.isRecording = true;
