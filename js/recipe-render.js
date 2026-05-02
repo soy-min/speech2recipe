@@ -1,3 +1,18 @@
+function encodeRecipeForUrl(recipe) {
+  const json = JSON.stringify(recipe);
+  const bytes = new TextEncoder().encode(json);
+  let binary = '';
+  for (const b of bytes) binary += String.fromCharCode(b);
+  return btoa(binary);
+}
+
+export function createShareUrl(recipe) {
+  const encoded = encodeRecipeForUrl(recipe);
+  const url = new URL('book.html', window.location.href);
+  url.hash = 'recipe=' + encoded;
+  return url.toString();
+}
+
 export function renderRecipeCard(recipe) {
   const el = document.createElement('div');
   el.className = 'recipe-card';
@@ -93,18 +108,19 @@ export function formatRecipeText(recipe) {
 }
 
 export async function shareRecipe(recipe) {
+  const url = createShareUrl(recipe);
   const text = formatRecipeText(recipe);
   if (navigator.share) {
     try {
-      await navigator.share({ title: recipe.title, text });
+      await navigator.share({ title: recipe.title, text, url });
       return;
     } catch (e) {
       if (e.name === 'AbortError') return;
     }
   }
   try {
-    await navigator.clipboard.writeText(text);
-    showToast('Recipe copied to clipboard!');
+    await navigator.clipboard.writeText(url);
+    showToast('Link copied to clipboard!');
   } catch {
     showToast('Could not copy — try selecting and copying manually.');
   }

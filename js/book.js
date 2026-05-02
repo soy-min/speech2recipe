@@ -1,6 +1,13 @@
 import { getRecipes, deleteRecipe } from './storage.js';
 import { renderRecipeCard, shareRecipe } from './recipe-render.js';
 
+function decodeRecipeFromHash(encoded) {
+  const binary = atob(encoded);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return JSON.parse(new TextDecoder().decode(bytes));
+}
+
 const $ = id => document.getElementById(id);
 
 const recipeGrid = $('recipe-grid');
@@ -141,3 +148,17 @@ function escHtml(str) {
 
 allRecipes = getRecipes();
 renderGrid(allRecipes);
+
+function loadRecipeFromHash() {
+  const hash = window.location.hash;
+  if (!hash.startsWith('#recipe=')) return;
+  try {
+    const recipe = decodeRecipeFromHash(hash.slice('#recipe='.length));
+    openModal(recipe);
+  } catch {
+    // malformed hash — ignore
+  }
+}
+
+loadRecipeFromHash();
+window.addEventListener('hashchange', loadRecipeFromHash);
