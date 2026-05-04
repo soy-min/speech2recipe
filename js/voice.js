@@ -6,30 +6,29 @@ export class VoiceRecorder {
     this.recognition = null;
     this.isRecording = false;
     this.transcript = '';
+    this._retryCount = 0;
+    this._maxRetries = 3;
+    this._retryTimer = null;
+    this._networkError = false;
   }
 
   get isSupported() {
     return 'SpeechRecognition' in window || 'webkitSpeechRecognition' in window;
   }
 
-  start() {
-    if (!this.isSupported) {
-      this.onStatusChange('error', 'Speech recognition is not supported in this browser. Try Chrome or Edge.');
-      return;
-    }
-
+  _buildRecognition() {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    this.recognition = new SR();
-    this.recognition.continuous = true;
-    this.recognition.interimResults = true;
-    this.recognition.lang = this.lang;
+    const rec = new SR();
+    rec.continuous = true;
+    rec.interimResults = true;
+    rec.lang = this.lang;
 
-    this.recognition.onstart = () => {
-      this.isRecording = true;
+    rec.onstart = () => {
+      this._retryCount = 0;
       this.onStatusChange('recording', 'Recording… speak your recipe');
     };
 
-    this.recognition.onresult = (event) => {
+    rec.onresult = (event) => {
       let interim = '';
       let final = '';
       for (let i = event.resultIndex; i < event.results.length; i++) {
@@ -41,23 +40,74 @@ export class VoiceRecorder {
       this.onTranscript(this.transcript + interim, !!interim);
     };
 
-    this.recognition.onerror = (event) => {
+    rec.onerror = (event) => {
       if (event.error === 'no-speech') return;
-      this.onStatusChange('error', `Recognition error: ${event.error}`);
-      this.isRecording = false;
-    };
-
-    this.recognition.onend = () => {
-      if (this.isRecording) {
-        this.recognition.start();
+      if (event.error === 'network') {
+        this._networkError = true;
+        return;
       }
+      this.isRecording = false;
+      this.onStatusChange('error', this._friendlyError(event.error));
     };
 
+    rec.onend = () => {
+      if (!this.isRecording) return;
+
+      if (this._networkError) {
+        this._networkError = false;
+        if (this._retryCount < this._maxRetries) {
+          this._retryCount++;
+          const delay = this._retryCount * 1500;
+          this.onStatusChange('recording',
+            `Connection issue, retrying in ${delay / 1000}s… (${this._retryCount}/${this._maxRetries})`
+          );
+          this._retryTimer = setTimeout(() => {
+            if (!this.isRecording) return;
+            this.recognition = this._buildRecognition();
+            this.recognition.start();
+          }, delay);
+        } else {
+          this.isRecording = false;
+          this.onStatusChange('error',
+            'Speech recognition needs internet access to Google\'s servers. Check your connection or try a different network.'
+          );
+        }
+        return;
+      }
+
+      // Normal session end: restart for continuous recording
+      this.recognition = this._buildRecognition();
+      this.recognition.start();
+    };
+
+    return rec;
+  }
+
+  _friendlyError(code) {
+    const messages = {
+      'not-allowed': 'Microphone access denied. Allow microphone in your browser settings and try again.',
+      'aborted': 'Recording was aborted.',
+      'audio-capture': 'No microphone found. Connect a microphone and try again.',
+      'service-not-allowed': 'Speech service blocked. Make sure the page is loaded over HTTPS.',
+    };
+    return messages[code] || `Recognition error: ${code}`;
+  }
+
+  start() {
+    if (!this.isSupported) {
+      this.onStatusChange('error', 'Speech recognition is not supported in this browser. Try Chrome or Edge.');
+      return;
+    }
+    this.isRecording = true;
+    this._retryCount = 0;
+    this._networkError = false;
+    this.recognition = this._buildRecognition();
     this.recognition.start();
   }
 
   stop() {
     this.isRecording = false;
+    clearTimeout(this._retryTimer);
     if (this.recognition) {
       this.recognition.stop();
       this.recognition = null;
