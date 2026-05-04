@@ -140,6 +140,11 @@ main {
   outline: none;
   border-color: var(--color-primary);
 }
+#model-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
 .hint { font-size: 0.75rem; color: var(--color-text-muted); }
 
 /* ---- Buttons ---- */

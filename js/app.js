@@ -1,12 +1,15 @@
 import { VoiceRecorder } from './voice.js';
 import { structureRecipe } from './llm.js';
-import { getApiKey, saveApiKey, getLang, saveLang, saveRecipe } from './storage.js';
+import { getApiKey, saveApiKey, getLang, saveLang, saveRecipe, getProvider, saveProvider, getModel, saveModel, detectProvider } from './storage.js';
 import { renderRecipeCard, shareRecipe } from './recipe-render.js';
 import { isAuthenticated, authenticate } from './auth.js';
 
 const $ = id => document.getElementById(id);
 
 const apiKeyInput = $('api-key');
+const providerSelect = $('provider-select');
+const modelGroup = $('model-group');
+const modelInput = $('model-input');
 const saveKeyBtn = $('save-key');
 const langSelect = $('lang-select');
 const recordBtn = $('record-btn');
@@ -61,10 +64,27 @@ function init() {
   initApp();
 }
 
+function updateModelVisibility() {
+  modelGroup.hidden = providerSelect.value !== 'openrouter';
+}
+
+apiKeyInput.addEventListener('input', () => {
+  const detected = detectProvider(apiKeyInput.value.trim());
+  if (detected) {
+    providerSelect.value = detected;
+    updateModelVisibility();
+  }
+});
+
+providerSelect.addEventListener('change', updateModelVisibility);
+
 function initApp() {
   const key = getApiKey();
   if (key) {
     apiKeyInput.value = key;
+    providerSelect.value = getProvider();
+    modelInput.value = getModel();
+    updateModelVisibility();
     enableRecording();
   } else {
     document.querySelector('#settings-panel details').open = true;
@@ -87,6 +107,8 @@ saveKeyBtn.addEventListener('click', () => {
   const key = apiKeyInput.value.trim();
   if (!key) return alert('Please enter a valid API key.');
   saveApiKey(key);
+  saveProvider(providerSelect.value);
+  saveModel(modelInput.value.trim());
   saveLang(langSelect.value);
   enableRecording();
   document.querySelector('details').removeAttribute('open');
@@ -136,7 +158,9 @@ structureBtn.addEventListener('click', async () => {
   resultActions.hidden = true;
 
   try {
-    currentRecipe = await structureRecipe(transcript, apiKey);
+    const provider = getProvider();
+    const model = getModel() || null;
+    currentRecipe = await structureRecipe(transcript, apiKey, provider, model);
     const card = renderRecipeCard(currentRecipe);
     recipeOutput.appendChild(card);
     resultActions.hidden = false;

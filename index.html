@@ -55,9 +55,18 @@
       <details>
         <summary>⚙️ API Key &amp; Language</summary>
         <div class="settings-content">
-          <label for="api-key">Anthropic API Key</label>
-          <input type="password" id="api-key" placeholder="sk-ant-..." autocomplete="off" />
-          <button id="save-key">Save Key</button>
+          <label for="api-key">API Key</label>
+          <input type="password" id="api-key" placeholder="sk-ant-... or sk-or-..." autocomplete="off" />
+          <label for="provider-select">Provider</label>
+          <select id="provider-select">
+            <option value="anthropic">Anthropic (Claude)</option>
+            <option value="openrouter">OpenRouter</option>
+          </select>
+          <div id="model-group" hidden>
+            <label for="model-input">Model</label>
+            <input type="text" id="model-input" placeholder="anthropic/claude-sonnet" autocomplete="off" />
+          </div>
+          <button id="save-key">Save Settings</button>
           <p class="hint">Your key is stored locally in your browser only.</p>
           <label for="lang-select">Language / Sprache</label>
           <select id="lang-select">
