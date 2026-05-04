@@ -23,6 +23,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/configure-pages@v5
+      - name: Generate version.js
+        run: |
+          VERSION=$(git describe --tags --abbrev=7 --always 2>/dev/null || git rev-parse --short HEAD)
+          COMMIT=$(git rev-parse --short HEAD)
+          DATE=$(date -u +%Y-%m-%d)
+          printf 'const APP_VERSION = { version: "%s", commit: "%s", date: "%s" };\n' "$VERSION" "$COMMIT" "$DATE" > js/version.js
       - uses: actions/upload-pages-artifact@v3
         with:
           path: .

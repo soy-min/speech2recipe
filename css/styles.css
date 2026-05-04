@@ -562,3 +562,23 @@ button:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
   }
   .transcript-actions button { min-height: 44px; }
 }
+
+/* ---- Version Footer ---- */
+.version-footer {
+  text-align: center;
+  padding: 0.75rem 1rem 1rem;
+  opacity: 0.45;
+  transition: opacity 0.2s;
+}
+
+.version-footer:hover {
+  opacity: 0.75;
+}
+
+.version-badge {
+  font-family: var(--font);
+  font-size: 0.7rem;
+  color: var(--color-text-muted);
+  letter-spacing: 0.04em;
+  cursor: default;
+}

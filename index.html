@@ -110,6 +110,20 @@
     </div>
   </div>
 
+  <script src="js/version.js"></script>
   <script type="module" src="js/app.js"></script>
+  <footer class="version-footer">
+    <span class="version-badge" id="version-badge">loading…</span>
+  </footer>
+  <script>
+    (function () {
+      var v = typeof APP_VERSION !== 'undefined' ? APP_VERSION : { version: 'dev', commit: 'local', date: '–' };
+      var badge = document.getElementById('version-badge');
+      if (badge) {
+        badge.textContent = v.version;
+        badge.title = 'Commit: ' + v.commit + ' · Build: ' + v.date;
+      }
+    })();
+  </script>
 </body>
 </html>
