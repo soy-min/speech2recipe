@@ -1,7 +1,7 @@
 const ANTHROPIC_API_URL = 'https://api.anthropic.com/v1/messages';
 const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
 const DEFAULT_ANTHROPIC_MODEL = 'claude-sonnet-4-6';
-const DEFAULT_OPENROUTER_MODEL = 'anthropic/claude-sonnet';
+const DEFAULT_OPENROUTER_MODEL = 'anthropic/claude-sonnet-4-5';
 
 const SYSTEM_PROMPT = `You are a recipe extraction assistant. The user will give you a voice transcript of someone describing a recipe.
 Your job is to extract and structure the recipe into a clean JSON object.
