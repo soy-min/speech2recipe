@@ -25,6 +25,8 @@ const resultActions = $('result-actions');
 const saveRecipeBtn = $('save-recipe-btn');
 const shareRecipeBtn = $('share-recipe-btn');
 const tryAgainBtn = $('try-again-btn');
+const fallbackPanel = $('fallback-panel');
+const fallbackInput = $('fallback-input');
 
 const authOverlay = $('auth-overlay');
 const authForm = $('auth-form');
@@ -124,6 +126,11 @@ const recorder = new VoiceRecorder({
   onStatusChange: (state, message) => {
     recordStatus.textContent = message;
     recordBtn.classList.toggle('recording', state === 'recording');
+    if (state === 'fallback') {
+      transcriptPanel.hidden = false;
+      fallbackPanel.hidden = false;
+      fallbackInput.focus();
+    }
   },
 });
 
@@ -139,13 +146,15 @@ recordBtn.addEventListener('click', () => {
 clearBtn.addEventListener('click', () => {
   recorder.reset();
   transcriptText.textContent = '';
+  fallbackInput.value = '';
+  fallbackPanel.hidden = true;
   transcriptPanel.hidden = true;
   resultPanel.hidden = true;
   currentRecipe = null;
 });
 
 structureBtn.addEventListener('click', async () => {
-  const transcript = transcriptText.textContent.trim();
+  const transcript = transcriptText.textContent.trim() || fallbackInput.value.trim();
   if (!transcript) return;
 
   const apiKey = getApiKey();

@@ -72,8 +72,8 @@ export class VoiceRecorder {
           }, delay);
         } else {
           this.isRecording = false;
-          this.onStatusChange('error',
-            'Speech recognition failed after 3 attempts. This feature needs access to Google\'s servers — try a different network, disable VPN, or switch to Chrome/Safari. Click the mic to retry.'
+          this.onStatusChange('fallback',
+            'Voice recognition unavailable on this network. Type your recipe below, or try a different network / browser.'
           );
         }
         return;

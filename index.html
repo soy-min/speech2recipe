@@ -110,6 +110,10 @@
         <div class="transcript-panel" id="transcript-panel" hidden>
           <h2>Transcript</h2>
           <p id="transcript-text" class="transcript-text"></p>
+          <div id="fallback-panel" class="fallback-panel" hidden>
+            <p class="fallback-note">Voice recognition can't reach Google's servers on your current network. Type your recipe instead:</p>
+            <textarea id="fallback-input" class="fallback-input" rows="6" placeholder="Describe your recipe — ingredients, amounts, steps…"></textarea>
+          </div>
           <div class="transcript-actions">
             <button id="clear-btn">Clear</button>
             <button id="structure-btn" class="primary">Structure Recipe →</button>
