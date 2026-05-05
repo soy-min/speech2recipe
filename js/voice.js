@@ -62,7 +62,7 @@ export class VoiceRecorder {
         if (this._retryCount < this._maxRetries) {
           this._retryCount++;
           const delay = this._retryCount * 1500;
-          this.onStatusChange('recording',
+          this.onStatusChange('retrying',
             `Connection issue, retrying in ${delay / 1000}s… (${this._retryCount}/${this._maxRetries})`
           );
           this._retryTimer = setTimeout(() => {

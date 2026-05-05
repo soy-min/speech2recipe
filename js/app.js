@@ -125,11 +125,11 @@ const recorder = new VoiceRecorder({
   },
   onStatusChange: (state, message) => {
     recordStatus.textContent = message;
-    recordBtn.classList.toggle('recording', state === 'recording');
-    if (state === 'fallback') {
+    recordBtn.classList.toggle('recording', state === 'recording' || state === 'retrying');
+    if (state === 'fallback' || state === 'retrying') {
       transcriptPanel.hidden = false;
       fallbackPanel.hidden = false;
-      fallbackInput.focus();
+      if (state === 'fallback') fallbackInput.focus();
     }
   },
 });
