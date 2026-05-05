@@ -24,11 +24,15 @@ export class VoiceRecorder {
     rec.lang = this.lang;
 
     rec.onstart = () => {
-      this._retryCount = 0;
+      // Do NOT reset _retryCount here — onstart fires on every session including retries,
+      // which would make the max-retry limit unreachable (infinite loop).
+      // _retryCount resets in start() for fresh recordings and in onresult when the
+      // connection is confirmed working.
       this.onStatusChange('recording', 'Recording… speak your recipe');
     };
 
     rec.onresult = (event) => {
+      this._retryCount = 0; // Connection is confirmed working; grant fresh retries
       let interim = '';
       let final = '';
       for (let i = event.resultIndex; i < event.results.length; i++) {
@@ -69,7 +73,7 @@ export class VoiceRecorder {
         } else {
           this.isRecording = false;
           this.onStatusChange('error',
-            'Speech recognition needs internet access to Google\'s servers. Check your connection or try a different network.'
+            'Speech recognition failed after 3 attempts. This feature needs access to Google\'s servers — try a different network, disable VPN, or switch to Chrome/Safari. Click the mic to retry.'
           );
         }
         return;
@@ -96,6 +100,10 @@ export class VoiceRecorder {
   start() {
     if (!this.isSupported) {
       this.onStatusChange('error', 'Speech recognition is not supported in this browser. Try Chrome or Edge.');
+      return;
+    }
+    if (!navigator.onLine) {
+      this.onStatusChange('error', 'No internet connection. Speech recognition requires access to Google\'s servers — connect and try again.');
       return;
     }
     this.isRecording = true;
