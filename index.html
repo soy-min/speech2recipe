@@ -11,7 +11,7 @@
   <meta name="twitter:card" content="summary" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,700&display=swap" />
   <link rel="stylesheet" href="css/styles.css" />
   <link rel="stylesheet" href="css/legal.css" />
 </head>
@@ -26,73 +26,150 @@
   </header>
 
   <main>
-    <section class="record-panel">
-      <div class="mic-container">
-        <p class="mic-tagline">What would you like to cook?</p>
-        <div class="how-it-works" aria-hidden="true">
-          <span class="how-step"><span class="how-icon">🎙️</span> Speak</span>
-          <span class="how-arrow">›</span>
-          <span class="how-step"><span class="how-icon">✍️</span> Transcribe</span>
-          <span class="how-arrow">›</span>
-          <span class="how-step"><span class="how-icon">🍳</span> Cook</span>
+    <!-- Hero Section -->
+    <section class="hero-section section-with-bg">
+      <img src="images/hero.jpg" alt="" role="presentation" loading="eager" decoding="async" class="section-bg-img" />
+      <div class="hero-overlay overlay"></div>
+      <div class="hero-content content">
+        <div class="hero-eyebrow">🎙️ Voice-Powered AI</div>
+        <h2 class="hero-headline">Speak your recipe.<br>Get it structured.</h2>
+        <p class="hero-sub">Describe what you want to cook, in any language. Your recipe is ready in seconds, automatically structured and saved.</p>
+        <div class="hero-actions">
+          <a href="#app" class="btn-hero-primary">▶ Start Recording</a>
+          <a href="#how-it-works" class="btn-hero-ghost">See how it works ↓</a>
         </div>
-        <button id="record-btn" class="mic-btn" aria-label="Start recording" disabled>
-          <span class="mic-icon">🎙️</span>
-        </button>
-        <p id="record-status">Set your API key to begin</p>
       </div>
+      <a href="#how-it-works" class="scroll-indicator" aria-label="Scroll down">↓</a>
+    </section>
 
-      <div class="transcript-panel" id="transcript-panel" hidden>
-        <h2>Transcript</h2>
-        <p id="transcript-text" class="transcript-text"></p>
-        <div class="transcript-actions">
-          <button id="clear-btn">Clear</button>
-          <button id="structure-btn" class="primary">Structure Recipe →</button>
+    <!-- How It Works Section -->
+    <section id="how-it-works" class="how-section">
+      <h2 class="section-headline reveal">From idea to recipe in seconds</h2>
+      <p class="section-sub reveal">No typing. No searching. Just speak.</p>
+      <div class="steps-grid">
+        <div class="step-card reveal">
+          <span class="step-num-badge">1</span>
+          <div class="step-icon-wrap">🎙️</div>
+          <h3 class="step-title">Speak</h3>
+          <p class="step-desc">Describe what you want to cook in your own words — any language, any detail level.</p>
+        </div>
+        <div class="step-card reveal">
+          <span class="step-num-badge">2</span>
+          <div class="step-icon-wrap">✍️</div>
+          <h3 class="step-title">Transcribe</h3>
+          <p class="step-desc">AI parses your words into a clean recipe with ingredients, steps, and timings.</p>
+        </div>
+        <div class="step-card reveal">
+          <span class="step-num-badge">3</span>
+          <div class="step-icon-wrap">🍳</div>
+          <h3 class="step-title">Cook</h3>
+          <p class="step-desc">Follow your recipe step by step. Save it to your book to use again anytime.</p>
         </div>
       </div>
     </section>
 
-    <section class="settings-panel" id="settings-panel">
-      <details>
-        <summary>⚙️ API Key &amp; Language</summary>
-        <div class="settings-content">
-          <label for="api-key">API Key</label>
-          <input type="password" id="api-key" placeholder="sk-ant-... or sk-or-..." autocomplete="off" />
-          <label for="provider-select">Provider</label>
-          <select id="provider-select">
-            <option value="anthropic">Anthropic (Claude)</option>
-            <option value="openrouter">OpenRouter</option>
-          </select>
-          <div id="model-group" hidden>
-            <label for="model-input">Model</label>
-            <input type="text" id="model-input" placeholder="anthropic/claude-sonnet" autocomplete="off" />
+    <!-- Features Strip -->
+    <section class="features-strip">
+      <div class="features-grid">
+        <div class="feature reveal">
+          <div class="feature-icon">🌍</div>
+          <div class="feature-title">Any language</div>
+          <p class="feature-desc">Auto-detects your language. Speak German, English, French — whatever feels natural.</p>
+        </div>
+        <div class="feature reveal">
+          <div class="feature-icon">🔒</div>
+          <div class="feature-title">Private</div>
+          <p class="feature-desc">Your API key stays in your browser. No account, no tracking, no data sent to us.</p>
+        </div>
+        <div class="feature reveal">
+          <div class="feature-icon">⚡</div>
+          <div class="feature-title">Instant</div>
+          <p class="feature-desc">Results in under 10 seconds. From first word spoken to a fully structured recipe.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- App sections -->
+    <div class="app-sections" id="app">
+      <section class="record-panel">
+        <div class="mic-container">
+          <p class="mic-tagline">What would you like to cook?</p>
+          <div class="how-it-works" aria-hidden="true">
+            <span class="how-step"><span class="how-icon">🎙️</span> Speak</span>
+            <span class="how-arrow">›</span>
+            <span class="how-step"><span class="how-icon">✍️</span> Transcribe</span>
+            <span class="how-arrow">›</span>
+            <span class="how-step"><span class="how-icon">🍳</span> Cook</span>
           </div>
-          <button id="save-key">Save Settings</button>
-          <p class="hint">Your key is stored locally in your browser only.</p>
-          <label for="lang-select">Language / Sprache</label>
-          <select id="lang-select">
-            <option value="auto">Auto-detect (browser language)</option>
-            <option value="de-DE">Deutsch</option>
-            <option value="en-US">English (US)</option>
-            <option value="en-GB">English (UK)</option>
-            <option value="fr-FR">Français</option>
-            <option value="es-ES">Español</option>
-            <option value="it-IT">Italiano</option>
-          </select>
+          <button id="record-btn" class="mic-btn" aria-label="Start recording" disabled>
+            <span class="mic-icon">🎙️</span>
+          </button>
+          <p id="record-status">Set your API key to begin</p>
         </div>
-      </details>
-    </section>
 
-    <section class="result-panel" id="result-panel" hidden>
-      <div class="loading" id="loading" hidden>
-        <div class="spinner"></div>
-        <p>Structuring your recipe…</p>
-      </div>
-      <div id="recipe-output"></div>
-      <div class="result-actions" id="result-actions" hidden>
-        <button id="share-recipe-btn">Share ↗</button>
-        <button id="save-recipe-btn" class="primary">Save to Recipe Book</button>
-        <button id="try-again-btn">Try Again</button>
+        <div class="transcript-panel" id="transcript-panel" hidden>
+          <h2>Transcript</h2>
+          <p id="transcript-text" class="transcript-text"></p>
+          <div class="transcript-actions">
+            <button id="clear-btn">Clear</button>
+            <button id="structure-btn" class="primary">Structure Recipe →</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="settings-panel" id="settings-panel">
+        <details>
+          <summary>⚙️ API Key &amp; Language</summary>
+          <div class="settings-content">
+            <label for="api-key">API Key</label>
+            <input type="password" id="api-key" placeholder="sk-ant-... or sk-or-..." autocomplete="off" />
+            <label for="provider-select">Provider</label>
+            <select id="provider-select">
+              <option value="anthropic">Anthropic (Claude)</option>
+              <option value="openrouter">OpenRouter</option>
+            </select>
+            <div id="model-group" hidden>
+              <label for="model-input">Model</label>
+              <input type="text" id="model-input" placeholder="anthropic/claude-sonnet" autocomplete="off" />
+            </div>
+            <button id="save-key">Save Settings</button>
+            <p class="hint">Your key is stored locally in your browser only.</p>
+            <label for="lang-select">Language / Sprache</label>
+            <select id="lang-select">
+              <option value="auto">Auto-detect (browser language)</option>
+              <option value="de-DE">Deutsch</option>
+              <option value="en-US">English (US)</option>
+              <option value="en-GB">English (UK)</option>
+              <option value="fr-FR">Français</option>
+              <option value="es-ES">Español</option>
+              <option value="it-IT">Italiano</option>
+            </select>
+          </div>
+        </details>
+      </section>
+
+      <section class="result-panel" id="result-panel" hidden>
+        <div class="loading" id="loading" hidden>
+          <div class="spinner"></div>
+          <p>Structuring your recipe…</p>
+        </div>
+        <div id="recipe-output"></div>
+        <div class="result-actions" id="result-actions" hidden>
+          <button id="share-recipe-btn">Share ↗</button>
+          <button id="save-recipe-btn" class="primary">Save to Recipe Book</button>
+          <button id="try-again-btn">Try Again</button>
+        </div>
+      </section>
+    </div>
+
+    <!-- CTA Section -->
+    <section class="cta-section section-with-bg">
+      <img src="images/cta-bg.jpg" alt="" role="presentation" loading="lazy" decoding="async" class="section-bg-img" />
+      <div class="cta-overlay overlay"></div>
+      <div class="content">
+        <h2 class="cta-headline">Ready to cook something amazing?</h2>
+        <p class="cta-sub">Your first recipe is 30 seconds away.</p>
+        <a href="#app" class="btn-hero-primary">▶ Start Recording</a>
       </div>
     </section>
   </main>
@@ -111,18 +188,27 @@
     </div>
   </div>
 
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div>
+        <div class="footer-brand">🎙️ Speech to Recipe</div>
+        <div class="footer-tagline">Voice-powered recipe creation, instantly.</div>
+      </div>
+      <nav class="footer-nav">
+        <a href="impressum.html">Impressum</a>
+        <a href="datenschutz.html">Datenschutz</a>
+        <a href="book.html">Recipe Book</a>
+      </nav>
+    </div>
+    <hr class="footer-divider" />
+    <p class="footer-legal">
+      &copy; 2025 Speech to Recipe &nbsp;·&nbsp;
+      <span class="version-badge" id="version-badge">loading…</span>
+    </p>
+  </footer>
+
   <script src="js/version.js"></script>
   <script type="module" src="js/app.js"></script>
-
-  <footer class="site-footer">
-    <nav class="footer-nav">
-      <a href="impressum.html">Impressum</a>
-      <span class="footer-sep">·</span>
-      <a href="datenschutz.html">Datenschutz</a>
-      <span class="footer-sep">·</span>
-      <span class="version-badge" id="version-badge">loading…</span>
-    </nav>
-  </footer>
   <script>
     (function () {
       var v = typeof APP_VERSION !== 'undefined' ? APP_VERSION : { version: 'dev', commit: 'local', date: '–' };

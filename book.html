@@ -11,7 +11,7 @@
   <meta name="twitter:card" content="summary" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,700&display=swap" />
   <link rel="stylesheet" href="css/styles.css" />
   <link rel="stylesheet" href="css/book.css" />
   <link rel="stylesheet" href="css/legal.css" />
@@ -26,13 +26,25 @@
   </header>
 
   <main>
-    <div class="book-toolbar">
-      <input type="search" id="search" placeholder="Search recipes…" />
-      <button id="export-btn">Export HTML</button>
+    <div class="book-banner section-with-bg">
+      <img src="images/hero.jpg" alt="" role="presentation" loading="lazy" decoding="async"
+           class="section-bg-img" style="object-position: center 60%;" />
+      <div class="hero-overlay overlay"></div>
+      <div class="book-banner-content">
+        <h1 class="book-banner-title">My Recipe Book</h1>
+        <p class="book-banner-sub">Your saved recipes, ready to cook</p>
+      </div>
     </div>
 
-    <div id="recipe-grid" class="recipe-grid">
-      <p class="empty-state" id="empty-state">No recipes yet. <a href="index.html">Record your first recipe →</a></p>
+    <div class="app-sections">
+      <div class="book-toolbar">
+        <input type="search" id="search" placeholder="Search recipes…" />
+        <button id="export-btn">Export HTML</button>
+      </div>
+
+      <div id="recipe-grid" class="recipe-grid">
+        <p class="empty-state" id="empty-state">No recipes yet. <a href="index.html">Record your first recipe →</a></p>
+      </div>
     </div>
   </main>
 
@@ -48,13 +60,22 @@
   <script type="module" src="js/book.js"></script>
 
   <footer class="site-footer">
-    <nav class="footer-nav">
-      <a href="impressum.html">Impressum</a>
-      <span class="footer-sep">·</span>
-      <a href="datenschutz.html">Datenschutz</a>
-      <span class="footer-sep">·</span>
+    <div class="footer-inner">
+      <div>
+        <div class="footer-brand">🎙️ Speech to Recipe</div>
+        <div class="footer-tagline">Voice-powered recipe creation, instantly.</div>
+      </div>
+      <nav class="footer-nav">
+        <a href="index.html">Record</a>
+        <a href="impressum.html">Impressum</a>
+        <a href="datenschutz.html">Datenschutz</a>
+      </nav>
+    </div>
+    <hr class="footer-divider" />
+    <p class="footer-legal">
+      &copy; 2025 Speech to Recipe &nbsp;·&nbsp;
       <span class="version-badge" id="version-badge">loading…</span>
-    </nav>
+    </p>
   </footer>
   <script>
     (function () {
