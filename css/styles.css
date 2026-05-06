@@ -734,6 +734,23 @@ button:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
   background: var(--c-surface-warm);
 }
 
+/* ---- Model download progress bar ---- */
+.model-loading-bar {
+  width: 160px;
+  height: 4px;
+  background: var(--c-border);
+  border-radius: var(--r-full);
+  overflow: hidden;
+  margin: -0.5rem 0 0.5rem;
+}
+.model-loading-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--c-fire), var(--c-honey));
+  border-radius: var(--r-full);
+  transition: width 0.4s ease;
+}
+
 /* ---- Spinner ---- */
 .loading {
   display: flex;

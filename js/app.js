@@ -1,5 +1,5 @@
 import { VoiceRecorder } from './voice.js';
-import { structureRecipe, transcribeAudio } from './llm.js';
+import { structureRecipe } from './llm.js';
 import { getApiKey, saveApiKey, getLang, saveLang, saveRecipe, getProvider, saveProvider, getModel, saveModel, detectProvider } from './storage.js';
 import { renderRecipeCard, shareRecipe } from './recipe-render.js';
 import { isAuthenticated, authenticate } from './auth.js';
@@ -27,6 +27,8 @@ const shareRecipeBtn = $('share-recipe-btn');
 const tryAgainBtn = $('try-again-btn');
 const fallbackPanel = $('fallback-panel');
 const fallbackInput = $('fallback-input');
+const modelLoadingBar = $('model-loading-bar');
+const modelLoadingFill = $('model-loading-fill');
 
 const authOverlay = $('auth-overlay');
 const authForm = $('auth-form');
@@ -34,7 +36,6 @@ const authCodeInput = $('auth-code');
 const authError = $('auth-error');
 
 let currentRecipe = null;
-let pendingAudio = null; // audio blob from MediaRecorder mode (Brave)
 
 function showAuthOverlay() {
   authOverlay.hidden = false;
@@ -99,6 +100,8 @@ function initApp() {
 function enableRecording() {
   recordBtn.disabled = false;
   recordStatus.textContent = 'Press to start recording';
+  // Preload Whisper model in background so it is ready when the user records
+  recorder.loadModel();
 }
 
 function resolvedLang() {
@@ -120,27 +123,40 @@ saveKeyBtn.addEventListener('click', () => {
 langSelect.addEventListener('change', () => saveLang(langSelect.value));
 
 const recorder = new VoiceRecorder({
-  onTranscript: (text, isInterim) => {
+  onTranscript: (text) => {
     transcriptText.textContent = text;
     transcriptPanel.hidden = !text;
   },
   onStatusChange: (state, message) => {
     recordStatus.textContent = message;
-    recordBtn.classList.toggle('recording', state === 'recording' || state === 'retrying');
-    if (state === 'fallback' || state === 'retrying') {
+
+    const isProcessing = state === 'loading-model' || state === 'transcribing';
+    recordBtn.classList.toggle('recording', state === 'recording');
+    if (getApiKey()) {
+      // Keep button enabled during recording (user needs to click to stop);
+      // disable only during post-recording processing
+      recordBtn.disabled = isProcessing && !recorder.isRecording;
+    }
+
+    // Show/hide the model download progress bar
+    if (state === 'loading-model') {
+      modelLoadingBar.hidden = false;
+      const match = message.match(/(\d+)%/);
+      if (match && modelLoadingFill) {
+        modelLoadingFill.style.width = match[1] + '%';
+      }
+    } else {
+      modelLoadingBar.hidden = true;
+      if (modelLoadingFill) modelLoadingFill.style.width = '0%';
+    }
+
+    if (state === 'error') {
       transcriptPanel.hidden = false;
       fallbackPanel.hidden = false;
-      if (state === 'fallback') fallbackInput.focus();
-    }
-    if (state === 'audio-ready') {
-      transcriptPanel.hidden = false; // expose Structure Recipe button
+      fallbackInput.focus();
     }
   },
 });
-
-recorder.onAudioReady = (blob) => {
-  pendingAudio = blob;
-};
 
 recordBtn.addEventListener('click', () => {
   if (recorder.isRecording) {
@@ -159,17 +175,13 @@ clearBtn.addEventListener('click', () => {
   transcriptPanel.hidden = true;
   resultPanel.hidden = true;
   currentRecipe = null;
-  pendingAudio = null;
 });
 
 structureBtn.addEventListener('click', async () => {
   const voiceText = transcriptText.textContent.trim();
   const typedText = fallbackInput.value.trim();
-  let transcript = voiceText || typedText;
-
-  // If we have a locally recorded audio blob but no text yet, transcribe first
-  const audio = pendingAudio;
-  if (!transcript && !audio) return;
+  const transcript = voiceText || typedText;
+  if (!transcript) return;
 
   const apiKey = getApiKey();
   if (!apiKey) return alert('Please set your API key first.');
@@ -183,37 +195,7 @@ structureBtn.addEventListener('click', async () => {
   try {
     const provider = getProvider();
     const model = getModel() || null;
-    const loadingMsg = loading.querySelector('p');
-
-    if (!transcript && audio) {
-      loadingMsg.textContent = 'Transcribing your recording…';
-      try {
-        const text = await transcribeAudio(audio, apiKey, provider);
-        if (text) {
-          transcript = text;
-          transcriptText.textContent = text;
-          pendingAudio = null;
-        } else {
-          // Provider doesn't support audio transcription — show text fallback
-          loading.hidden = true;
-          resultPanel.hidden = true;
-          fallbackPanel.hidden = false;
-          fallbackInput.placeholder = 'Transkription nicht verfügbar (Anthropic unterstützt kein Audio). Beschreibe dein Rezept:';
-          fallbackInput.focus();
-          return;
-        }
-      } catch (err) {
-        loading.hidden = true;
-        resultPanel.hidden = true;
-        recipeOutput.innerHTML = `<div style="padding:1.5rem;color:var(--color-danger)">Transcription failed: ${err.message}</div>`;
-        resultPanel.hidden = false;
-        return;
-      }
-    }
-
-    if (!transcript) { loading.hidden = true; resultPanel.hidden = true; return; }
-
-    loadingMsg.textContent = 'Structuring your recipe…';
+    loading.querySelector('p').textContent = 'Structuring your recipe…';
     currentRecipe = await structureRecipe(transcript, apiKey, provider, model);
     const card = renderRecipeCard(currentRecipe);
     recipeOutput.appendChild(card);

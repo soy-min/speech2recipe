@@ -104,6 +104,9 @@
           <button id="record-btn" class="mic-btn" aria-label="Start recording" disabled>
             <span class="mic-icon">🎙️</span>
           </button>
+          <div id="model-loading-bar" class="model-loading-bar" hidden>
+            <div id="model-loading-fill" class="model-loading-fill"></div>
+          </div>
           <p id="record-status">Set your API key to begin</p>
         </div>
 
@@ -111,7 +114,7 @@
           <h2>Transcript</h2>
           <p id="transcript-text" class="transcript-text"></p>
           <div id="fallback-panel" class="fallback-panel" hidden>
-            <p class="fallback-note">Voice recognition can't reach Google's servers. Type your recipe below:</p>
+            <p class="fallback-note">Voice transcription unavailable. Type your recipe below:</p>
             <textarea id="fallback-input" class="fallback-input" rows="6" placeholder="Describe your recipe — ingredients, amounts, steps…"></textarea>
           </div>
           <div class="transcript-actions">
