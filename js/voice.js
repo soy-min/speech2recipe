@@ -46,6 +46,7 @@ export class VoiceRecorder {
 
     rec.onerror = (event) => {
       if (event.error === 'no-speech') return;
+      if (event.error === 'aborted') return;
       if (event.error === 'network') {
         this._networkError = true;
         return;
@@ -59,6 +60,7 @@ export class VoiceRecorder {
 
       if (this._networkError) {
         this._networkError = false;
+        this.recognition = null;
         if (this._retryCount < this._maxRetries) {
           this._retryCount++;
           const delay = this._retryCount * 1500;
