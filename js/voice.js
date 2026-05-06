@@ -30,12 +30,27 @@ export class VoiceRecorder {
       hostname: window.location.hostname,
       online: navigator.onLine,
     });
+    // Brave has navigator.brave and blocks Google speech servers by default
+    let isBrave = false;
+    try { isBrave = !!(await navigator.brave?.isBrave()); } catch (_) { /* not Brave */ }
+
     LOG('Browser', {
       userAgent: navigator.userAgent,
       language: navigator.language,
       languages: navigator.languages,
       cookieEnabled: navigator.cookieEnabled,
+      isBrave,
+      vendor: navigator.vendor,
     });
+
+    if (isBrave) {
+      ERR(
+        'BRAVE BROWSER DETECTED — Brave blocks Google speech servers by default via Shields.',
+        'This is almost certainly the cause of the permanent network error.',
+        'Fix options: (1) Click the Brave Shields icon and set "Block fingerprinting" to off for this site,' +
+        ' (2) Set Shields to "Allow all" for soy-min.github.io, or (3) switch to Chrome/Safari.'
+      );
+    }
     LOG('Speech API', {
       nativeSpeechRecognition: 'SpeechRecognition' in window,
       webkitSpeechRecognition: 'webkitSpeechRecognition' in window,
@@ -85,6 +100,7 @@ export class VoiceRecorder {
     }
 
     LOG('=== End diagnostic ===');
+    return { isBrave };
   }
 
   _buildRecognition() {
@@ -228,7 +244,14 @@ export class VoiceRecorder {
 
     // Run full diagnostic on first start (retries skip this)
     if (this._retryCount === 0) {
-      await this._diagnose();
+      const { isBrave } = await this._diagnose();
+      if (isBrave) {
+        this.isRecording = false;
+        this.onStatusChange('error',
+          'Brave browser blocks Google\'s speech servers. Disable Brave Shields for this site, or use Chrome / Safari.'
+        );
+        return;
+      }
     }
 
     LOG('start() called', { retryCount: this._retryCount, lang: this.lang });
