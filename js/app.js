@@ -1,5 +1,5 @@
 import { VoiceRecorder } from './voice.js';
-import { structureRecipe } from './llm.js';
+import { structureRecipe, transcribeAudio } from './llm.js';
 import { getApiKey, saveApiKey, getLang, saveLang, saveRecipe, getProvider, saveProvider, getModel, saveModel, detectProvider } from './storage.js';
 import { renderRecipeCard, shareRecipe } from './recipe-render.js';
 import { isAuthenticated, authenticate } from './auth.js';
@@ -34,6 +34,7 @@ const authCodeInput = $('auth-code');
 const authError = $('auth-error');
 
 let currentRecipe = null;
+let pendingAudio = null; // audio blob from MediaRecorder mode (Brave)
 
 function showAuthOverlay() {
   authOverlay.hidden = false;
@@ -131,8 +132,15 @@ const recorder = new VoiceRecorder({
       fallbackPanel.hidden = false;
       if (state === 'fallback') fallbackInput.focus();
     }
+    if (state === 'audio-ready') {
+      transcriptPanel.hidden = false; // expose Structure Recipe button
+    }
   },
 });
+
+recorder.onAudioReady = (blob) => {
+  pendingAudio = blob;
+};
 
 recordBtn.addEventListener('click', () => {
   if (recorder.isRecording) {
@@ -151,11 +159,17 @@ clearBtn.addEventListener('click', () => {
   transcriptPanel.hidden = true;
   resultPanel.hidden = true;
   currentRecipe = null;
+  pendingAudio = null;
 });
 
 structureBtn.addEventListener('click', async () => {
-  const transcript = transcriptText.textContent.trim() || fallbackInput.value.trim();
-  if (!transcript) return;
+  const voiceText = transcriptText.textContent.trim();
+  const typedText = fallbackInput.value.trim();
+  let transcript = voiceText || typedText;
+
+  // If we have a locally recorded audio blob but no text yet, transcribe first
+  const audio = pendingAudio;
+  if (!transcript && !audio) return;
 
   const apiKey = getApiKey();
   if (!apiKey) return alert('Please set your API key first.');
@@ -169,6 +183,37 @@ structureBtn.addEventListener('click', async () => {
   try {
     const provider = getProvider();
     const model = getModel() || null;
+    const loadingMsg = loading.querySelector('p');
+
+    if (!transcript && audio) {
+      loadingMsg.textContent = 'Transcribing your recording…';
+      try {
+        const text = await transcribeAudio(audio, apiKey, provider);
+        if (text) {
+          transcript = text;
+          transcriptText.textContent = text;
+          pendingAudio = null;
+        } else {
+          // Provider doesn't support audio transcription — show text fallback
+          loading.hidden = true;
+          resultPanel.hidden = true;
+          fallbackPanel.hidden = false;
+          fallbackInput.placeholder = 'Transkription nicht verfügbar (Anthropic unterstützt kein Audio). Beschreibe dein Rezept:';
+          fallbackInput.focus();
+          return;
+        }
+      } catch (err) {
+        loading.hidden = true;
+        resultPanel.hidden = true;
+        recipeOutput.innerHTML = `<div style="padding:1.5rem;color:var(--color-danger)">Transcription failed: ${err.message}</div>`;
+        resultPanel.hidden = false;
+        return;
+      }
+    }
+
+    if (!transcript) { loading.hidden = true; resultPanel.hidden = true; return; }
+
+    loadingMsg.textContent = 'Structuring your recipe…';
     currentRecipe = await structureRecipe(transcript, apiKey, provider, model);
     const card = renderRecipeCard(currentRecipe);
     recipeOutput.appendChild(card);

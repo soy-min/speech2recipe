@@ -15,13 +15,15 @@ export class VoiceRecorder {
     this._retryTimer = null;
     this._networkError = false;
     this._sessionStart = null;
+    this._mediaRecorder = null;
+    // Set externally: recorder.onAudioReady = (blob) => { ... }
+    this.onAudioReady = null;
   }
 
   get isSupported() {
     return 'SpeechRecognition' in window || 'webkitSpeechRecognition' in window;
   }
 
-  // Run before the first start() to surface environment details in the console.
   async _diagnose() {
     LOG('=== Diagnostic run ===');
     LOG('Page', {
@@ -30,7 +32,7 @@ export class VoiceRecorder {
       hostname: window.location.hostname,
       online: navigator.onLine,
     });
-    // Brave has navigator.brave and blocks Google speech servers by default
+
     let isBrave = false;
     try { isBrave = !!(await navigator.brave?.isBrave()); } catch (_) { /* not Brave */ }
 
@@ -44,45 +46,37 @@ export class VoiceRecorder {
     });
 
     if (isBrave) {
-      ERR(
+      WARN(
         'BRAVE BROWSER DETECTED — Brave blocks Google speech servers by default via Shields.',
-        'This is almost certainly the cause of the permanent network error.',
-        'Fix options: (1) Click the Brave Shields icon and set "Block fingerprinting" to off for this site,' +
-        ' (2) Set Shields to "Allow all" for soy-min.github.io, or (3) switch to Chrome/Safari.'
+        'Switching to local MediaRecorder mode. Audio will be transcribed via your API when you click "Structure Recipe".'
       );
     }
+
     LOG('Speech API', {
       nativeSpeechRecognition: 'SpeechRecognition' in window,
       webkitSpeechRecognition: 'webkitSpeechRecognition' in window,
       selectedLang: this.lang,
     });
 
-    // Microphone permission state
     if (navigator.permissions) {
       try {
         const mic = await navigator.permissions.query({ name: 'microphone' });
         LOG('Microphone permission:', mic.state);
-        mic.onchange = () => LOG('Microphone permission changed to:', mic.state);
       } catch (e) {
         WARN('Could not query microphone permission:', e.message);
       }
     }
 
-    // Test whether the mic hardware is reachable at all
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const tracks = stream.getAudioTracks();
-      LOG('getUserMedia OK — audio tracks:', tracks.map(t => ({
-        label: t.label,
-        enabled: t.enabled,
-        readyState: t.readyState,
+      LOG('getUserMedia OK — audio tracks:', stream.getAudioTracks().map(t => ({
+        label: t.label, enabled: t.enabled, readyState: t.readyState,
       })));
       stream.getTracks().forEach(t => t.stop());
     } catch (e) {
       ERR('getUserMedia FAILED:', e.name, e.message);
     }
 
-    // Test whether Google HTTPS is reachable at all
     try {
       const t0 = Date.now();
       await fetch('https://www.google.com/generate_204', { mode: 'no-cors', cache: 'no-store' });
@@ -91,16 +85,44 @@ export class VoiceRecorder {
       ERR('Google HTTPS NOT reachable:', e.message);
     }
 
-    // Dump any CSP meta tags present in the document
     const cspMeta = document.querySelector('meta[http-equiv="Content-Security-Policy"]');
-    if (cspMeta) {
-      WARN('CSP meta tag found (may block speech API):', cspMeta.content);
-    } else {
-      LOG('No CSP meta tag in document');
-    }
+    if (cspMeta) WARN('CSP meta tag found:', cspMeta.content);
+    else LOG('No CSP meta tag in document');
 
     LOG('=== End diagnostic ===');
     return { isBrave };
+  }
+
+  async _startMediaRecorderMode() {
+    LOG('Starting MediaRecorder mode (Brave-compatible local recording)');
+    let stream;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    } catch (err) {
+      ERR('getUserMedia failed in MediaRecorder mode:', err.name, err.message);
+      this.isRecording = false;
+      this.onStatusChange('error', 'Microphone access denied. Allow microphone in your browser settings and try again.');
+      return;
+    }
+
+    const mimeType = ['audio/webm;codecs=opus', 'audio/webm', 'audio/ogg;codecs=opus', 'audio/mp4']
+      .find(t => MediaRecorder.isTypeSupported(t)) || '';
+    const mr = new MediaRecorder(stream, mimeType ? { mimeType } : {});
+    this._mediaRecorder = mr;
+    const chunks = [];
+
+    mr.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
+    mr.onstop = () => {
+      stream.getTracks().forEach(t => t.stop());
+      const blob = new Blob(chunks, { type: mr.mimeType || 'audio/webm' });
+      LOG('MediaRecorder stopped', { size: blob.size, type: blob.type });
+      if (this.onAudioReady) this.onAudioReady(blob);
+      this.onStatusChange('audio-ready', 'Recording captured — click "Structure Recipe" to transcribe and structure.');
+    };
+
+    mr.start(1000);
+    LOG('MediaRecorder started', { mimeType: mr.mimeType });
+    this.onStatusChange('recording', 'Recording… click the mic again to stop');
   }
 
   _buildRecognition() {
@@ -111,7 +133,7 @@ export class VoiceRecorder {
     rec.interimResults = true;
     rec.lang = this.lang;
 
-    LOG('Building recognition session', { apiType, lang: rec.lang, continuous: rec.continuous });
+    LOG('Building recognition session', { apiType, lang: rec.lang });
 
     rec.onstart = () => {
       this._sessionStart = Date.now();
@@ -121,7 +143,7 @@ export class VoiceRecorder {
 
     rec.onresult = (event) => {
       this._retryCount = 0;
-      LOG('onresult — speech received', {
+      LOG('onresult', {
         resultIndex: event.resultIndex,
         totalResults: event.results.length,
         elapsed: this._sessionStart ? `${Date.now() - this._sessionStart}ms` : '?',
@@ -138,55 +160,37 @@ export class VoiceRecorder {
     };
 
     rec.onerror = (event) => {
-      ERR('onerror — recognition error', {
+      ERR('onerror', {
         error: event.error,
-        message: event.message || '(no message property)',
+        message: event.message || '(none)',
         online: navigator.onLine,
         elapsed: this._sessionStart ? `${Date.now() - this._sessionStart}ms` : '?',
         retryCount: this._retryCount,
         lang: rec.lang,
-        protocol: window.location.protocol,
         hostname: window.location.hostname,
       });
-
-      if (event.error === 'no-speech') {
-        LOG('Ignoring no-speech (silence detected, session continues)');
-        return;
-      }
+      if (event.error === 'no-speech') return;
       if (event.error === 'network') {
-        WARN('Network error — Google speech servers unreachable. Possible causes:', [
-          '1. Network blocks wss://www.google.com (VPN, firewall, ISP)',
-          '2. Chrome speech API disabled via browser flags (chrome://flags)',
-          '3. Chrome enterprise policy blocking speech',
-          '4. Audio device conflict on macOS causing immediate session failure',
-          '5. Permissions-Policy header from server (check: curl -sI ' + window.location.origin + ')',
-        ]);
+        WARN('Network error — Google speech servers unreachable. Possible causes: VPN, firewall, browser policy, audio conflict.');
         this._networkError = true;
         return;
       }
-      ERR('Fatal recognition error — stopping', event.error);
+      ERR('Fatal error — stopping', event.error);
       this.isRecording = false;
       this.onStatusChange('error', this._friendlyError(event.error));
     };
 
     rec.onend = () => {
       const elapsed = this._sessionStart ? Date.now() - this._sessionStart : null;
-      LOG('onend — session ended', {
+      LOG('onend', {
         isRecording: this.isRecording,
         networkError: this._networkError,
         retryCount: this._retryCount,
         elapsedMs: elapsed,
-        suspiciouslyFast: elapsed !== null && elapsed < 500,
       });
-
       if (elapsed !== null && elapsed < 300 && this._networkError) {
-        WARN('Session ended in under 300ms with network error — this usually means:', [
-          'The browser could not establish the WebSocket to Google speech servers.',
-          'This is NOT a page/server issue (GitHub Pages headers are permissive).',
-          'Likely cause: local network/browser blocks wss://www.google.com traffic.',
-        ]);
+        WARN('Session ended in <300ms with network error — WebSocket to Google was never established.');
       }
-
       if (!this.isRecording) return;
 
       if (this._networkError) {
@@ -194,7 +198,7 @@ export class VoiceRecorder {
         if (this._retryCount < this._maxRetries) {
           this._retryCount++;
           const delay = this._retryCount * 1500;
-          LOG(`Scheduling retry ${this._retryCount}/${this._maxRetries} in ${delay}ms`);
+          LOG(`Retry ${this._retryCount}/${this._maxRetries} in ${delay}ms`);
           this.onStatusChange('retrying',
             `Connection issue, retrying in ${delay / 1000}s… (${this._retryCount}/${this._maxRetries})`
           );
@@ -204,7 +208,7 @@ export class VoiceRecorder {
             this.recognition.start();
           }, delay);
         } else {
-          ERR(`All ${this._maxRetries} retries exhausted — showing text fallback`);
+          ERR('All retries exhausted — showing text fallback');
           this.isRecording = false;
           this.onStatusChange('fallback',
             'Voice recognition unavailable on this network. Type your recipe below, or try a different network / browser.'
@@ -213,8 +217,7 @@ export class VoiceRecorder {
         return;
       }
 
-      // Normal session end: restart for continuous recording
-      LOG('Normal session end — restarting for continuous mode');
+      LOG('Normal session end — restarting');
       this.recognition = this._buildRecognition();
       this.recognition.start();
     };
@@ -238,23 +241,21 @@ export class VoiceRecorder {
       return;
     }
     if (!navigator.onLine) {
-      this.onStatusChange('error', 'No internet connection. Speech recognition requires access to Google\'s servers — connect and try again.');
+      this.onStatusChange('error', 'No internet connection. Speech recognition requires access to Google\'s servers.');
       return;
     }
 
-    // Run full diagnostic on first start (retries skip this)
     if (this._retryCount === 0) {
       const { isBrave } = await this._diagnose();
       if (isBrave) {
-        this.isRecording = false;
-        this.onStatusChange('error',
-          'Brave browser blocks Google\'s speech servers. Disable Brave Shields for this site, or use Chrome / Safari.'
-        );
+        // Brave blocks Google speech WebSocket — use local MediaRecorder instead
+        this.isRecording = true;
+        await this._startMediaRecorderMode();
         return;
       }
     }
 
-    LOG('start() called', { retryCount: this._retryCount, lang: this.lang });
+    LOG('start() — Web Speech API', { retryCount: this._retryCount, lang: this.lang });
     this.isRecording = true;
     this._retryCount = 0;
     this._networkError = false;
@@ -263,9 +264,15 @@ export class VoiceRecorder {
   }
 
   stop() {
-    LOG('stop() called', { wasRecording: this.isRecording });
+    LOG('stop()', { wasRecording: this.isRecording });
     this.isRecording = false;
     clearTimeout(this._retryTimer);
+
+    if (this._mediaRecorder && this._mediaRecorder.state !== 'inactive') {
+      this._mediaRecorder.stop(); // onstop fires async → onAudioReady + status update
+      this._mediaRecorder = null;
+      return;
+    }
     if (this.recognition) {
       this.recognition.stop();
       this.recognition = null;

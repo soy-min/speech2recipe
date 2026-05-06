@@ -88,6 +88,35 @@ async function callOpenRouter(transcript, apiKey, model) {
   return parseJson(raw);
 }
 
+// Transcribe a locally-recorded audio blob via OpenRouter's Whisper endpoint.
+// Returns the transcript string, or null if transcription is unsupported/failed.
+export async function transcribeAudio(audioBlob, apiKey, provider) {
+  if (provider !== 'openrouter') return null; // Anthropic has no audio transcription API
+
+  const ext = audioBlob.type.includes('mp4') ? 'mp4'
+            : audioBlob.type.includes('ogg') ? 'ogg'
+            : 'webm';
+  const file = new File([audioBlob], `recording.${ext}`, { type: audioBlob.type });
+
+  const fd = new FormData();
+  fd.append('file', file);
+  fd.append('model', 'openai/whisper-1');
+
+  const response = await fetch('https://openrouter.ai/api/v1/audio/transcriptions', {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${apiKey}` },
+    body: fd,
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.error?.message || `Transcription error: ${response.status}`);
+  }
+
+  const data = await response.json();
+  return data.text ?? null;
+}
+
 function parseJson(raw) {
   const text = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```\s*$/i, '').trim();
   return JSON.parse(text);
