@@ -29,6 +29,7 @@ const fallbackPanel = $('fallback-panel');
 const fallbackInput = $('fallback-input');
 const modelLoadingBar = $('model-loading-bar');
 const modelLoadingFill = $('model-loading-fill');
+const anthropicCorsHint = $('anthropic-cors-hint');
 
 const authOverlay = $('auth-overlay');
 const authForm = $('auth-form');
@@ -69,7 +70,9 @@ function init() {
 }
 
 function updateModelVisibility() {
-  modelGroup.hidden = providerSelect.value !== 'openrouter';
+  const isOpenRouter = providerSelect.value === 'openrouter';
+  modelGroup.hidden = !isOpenRouter;
+  anthropicCorsHint.hidden = isOpenRouter;
 }
 
 apiKeyInput.addEventListener('input', () => {

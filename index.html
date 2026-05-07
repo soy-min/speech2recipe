@@ -135,6 +135,10 @@
               <option value="anthropic">Anthropic (Claude)</option>
               <option value="openrouter">OpenRouter</option>
             </select>
+            <p id="anthropic-cors-hint" class="hint hint-warn" hidden>
+              ⚠️ Direct Anthropic calls are blocked by browser CORS policy on hosted sites.
+              Use <strong>OpenRouter</strong> with an <code>sk-or-...</code> key — it supports all Claude models and works from any browser.
+            </p>
             <div id="model-group" hidden>
               <label for="model-input">Model</label>
               <input type="text" id="model-input" placeholder="anthropic/claude-sonnet" autocomplete="off" />

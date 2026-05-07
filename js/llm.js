@@ -33,23 +33,31 @@ export async function structureRecipe(transcript, apiKey, provider = 'anthropic'
 }
 
 async function callAnthropic(transcript, apiKey, model) {
-  const response = await fetch(ANTHROPIC_API_URL, {
-    method: 'POST',
-    headers: {
-      'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01',
-      'content-type': 'application/json',
-      'anthropic-dangerous-direct-browser-calls': 'true',
-    },
-    body: JSON.stringify({
-      model,
-      max_tokens: 2048,
-      system: SYSTEM_PROMPT,
-      messages: [
-        { role: 'user', content: `Please structure this recipe transcript:\n\n${transcript}` }
-      ],
-    }),
-  });
+  let response;
+  try {
+    response = await fetch(ANTHROPIC_API_URL, {
+      method: 'POST',
+      headers: {
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'content-type': 'application/json',
+        'anthropic-dangerous-direct-browser-calls': 'true',
+      },
+      body: JSON.stringify({
+        model,
+        max_tokens: 2048,
+        system: SYSTEM_PROMPT,
+        messages: [
+          { role: 'user', content: `Please structure this recipe transcript:\n\n${transcript}` }
+        ],
+      }),
+    });
+  } catch {
+    throw new Error(
+      'Anthropic API call blocked by browser CORS policy. ' +
+      'Switch to OpenRouter in Settings — it supports browser access and all Claude models.'
+    );
+  }
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({}));

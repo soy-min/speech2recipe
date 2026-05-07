@@ -533,6 +533,7 @@ main {
   gap: 0.5rem;
 }
 .hint { font-size: 0.75rem; color: var(--c-text-muted); }
+.hint-warn { color: #92400e; background: #fef3c7; border-radius: 6px; padding: 0.5rem 0.625rem; }
 
 /* ---- Buttons ---- */
 button {
