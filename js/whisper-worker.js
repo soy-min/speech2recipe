@@ -25,7 +25,7 @@ self.onmessage = async ({ data }) => {
   if (data.type === 'transcribe') {
     try {
       const langCode = data.language ? data.language.split('-')[0] : undefined;
-      const result = await transcriber(data.audioUrl, {
+      const result = await transcriber(data.audioData, {
         task: 'transcribe',
         language: langCode,
         return_timestamps: false,

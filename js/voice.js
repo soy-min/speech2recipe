@@ -1,6 +1,30 @@
 const LOG = (...a) => console.log('[Speech2Recipe]', ...a);
 const ERR = (...a) => console.error('[Speech2Recipe]', ...a);
 
+// Decode a Blob to a 16 kHz mono Float32Array in the main thread,
+// where AudioContext is available. The worker cannot do this itself.
+async function decodeAudioToFloat32(blob, targetSampleRate = 16000) {
+  const arrayBuffer = await blob.arrayBuffer();
+  const audioCtx = new AudioContext();
+  let decoded;
+  try {
+    decoded = await audioCtx.decodeAudioData(arrayBuffer);
+  } finally {
+    audioCtx.close();
+  }
+  if (decoded.sampleRate === targetSampleRate) {
+    return decoded.getChannelData(0).slice();
+  }
+  const length = Math.round(decoded.duration * targetSampleRate);
+  const offlineCtx = new OfflineAudioContext(1, length, targetSampleRate);
+  const source = offlineCtx.createBufferSource();
+  source.buffer = decoded;
+  source.connect(offlineCtx.destination);
+  source.start(0);
+  const resampled = await offlineCtx.startRendering();
+  return resampled.getChannelData(0).slice();
+}
+
 export class VoiceRecorder {
   constructor({ onTranscript, onStatusChange, lang }) {
     this.onTranscript = onTranscript;
@@ -14,7 +38,6 @@ export class VoiceRecorder {
     this._workerReady = false;
     this._workerLoading = false;
     this._pendingBlob = null;
-    this._activeBlobUrl = null;
     this.onAudioReady = null; // kept for API compatibility
   }
 
@@ -68,24 +91,15 @@ export class VoiceRecorder {
         }
         break;
       case 'result':
-        this._revokeBlobUrl();
         LOG('Transcription:', data.text);
         this.transcript = data.text;
         this.onTranscript(data.text, false);
         this.onStatusChange('idle', 'Transcription complete');
         break;
       case 'error':
-        this._revokeBlobUrl();
         ERR('Transcription failed:', data.message);
         this.onStatusChange('error', 'Transcription failed. Type your recipe instead.');
         break;
-    }
-  }
-
-  _revokeBlobUrl() {
-    if (this._activeBlobUrl) {
-      URL.revokeObjectURL(this._activeBlobUrl);
-      this._activeBlobUrl = null;
     }
   }
 
@@ -97,13 +111,22 @@ export class VoiceRecorder {
     this._worker.postMessage({ type: 'load' });
   }
 
-  _runTranscription(blob) {
-    const url = URL.createObjectURL(blob);
-    this._activeBlobUrl = url;
+  async _runTranscription(blob) {
     const langCode = this.lang !== 'auto' ? this.lang : null;
     LOG('Starting transcription', { bytes: blob.size, lang: langCode });
     this.onStatusChange('transcribing', 'Transcribing your recording…');
-    this._worker.postMessage({ type: 'transcribe', audioUrl: url, language: langCode });
+    let audioData;
+    try {
+      audioData = await decodeAudioToFloat32(blob);
+    } catch (err) {
+      ERR('Audio decode failed:', err);
+      this.onStatusChange('error', 'Could not decode audio. Type your recipe instead.');
+      return;
+    }
+    this._worker.postMessage(
+      { type: 'transcribe', audioData, language: langCode },
+      [audioData.buffer],
+    );
   }
 
   async start() {
@@ -177,6 +200,5 @@ export class VoiceRecorder {
     this.isRecording = false;
     this.transcript = '';
     this._pendingBlob = null;
-    this._revokeBlobUrl();
   }
 }
