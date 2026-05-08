@@ -4,12 +4,19 @@ const DEFAULT_ANTHROPIC_MODEL = 'claude-sonnet-4-6';
 const DEFAULT_OPENROUTER_MODEL = 'anthropic/claude-sonnet-4-5';
 
 const SYSTEM_PROMPT = `You are a recipe extraction assistant. The user will give you a voice transcript of someone describing a recipe.
-Your job is to extract and structure the recipe into a clean JSON object.
+Your job is to extract and structure ONLY what is explicitly stated in the transcript into a clean JSON object.
+
+STRICT RULES — you must follow these without exception:
+1. INGREDIENTS: Only include ingredients that are explicitly named in the transcript. Do NOT add, infer, or supplement ingredients from your own knowledge.
+2. SPICES/SEASONINGS: If a spice or seasoning was NOT mentioned in the transcript, you MAY suggest it as optional by setting its "note" field to "optional suggestion". Never add unmentioned spices as required ingredients.
+3. STEPS: Only include steps explicitly described in the transcript. Do not add implied or standard steps from your culinary knowledge.
+4. QUANTITIES/AMOUNTS: Only include amounts explicitly stated. If an amount was not mentioned, use an empty string — do not guess.
+5. OTHER FIELDS (title, servings, times, difficulty, tags, tips): Derive these only from what is said. If a field truly cannot be determined, omit it or use an empty string. Do NOT invent values.
 
 Return ONLY valid JSON matching this schema:
 {
   "title": "string",
-  "description": "string (1-2 sentences)",
+  "description": "string (1-2 sentences, based only on what was said)",
   "servings": "string (e.g. '4 servings')",
   "prepTime": "string (e.g. '15 min')",
   "cookTime": "string (e.g. '30 min')",
@@ -22,7 +29,6 @@ Return ONLY valid JSON matching this schema:
   "tips": ["string"]
 }
 
-If a field cannot be determined from the transcript, use a sensible default or omit optional fields.
 Always return only the JSON, no extra text.`;
 
 export async function structureRecipe(transcript, apiKey, provider = 'anthropic', model = null) {
