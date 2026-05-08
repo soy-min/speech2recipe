@@ -104,12 +104,19 @@
           <button id="record-btn" class="mic-btn" aria-label="Start recording" disabled>
             <span class="mic-icon">🎙️</span>
           </button>
+          <div id="model-loading-bar" class="model-loading-bar" hidden>
+            <div id="model-loading-fill" class="model-loading-fill"></div>
+          </div>
           <p id="record-status">Set your API key to begin</p>
         </div>
 
         <div class="transcript-panel" id="transcript-panel" hidden>
           <h2>Transcript</h2>
           <p id="transcript-text" class="transcript-text"></p>
+          <div id="fallback-panel" class="fallback-panel" hidden>
+            <p class="fallback-note">Voice transcription unavailable. Type your recipe below:</p>
+            <textarea id="fallback-input" class="fallback-input" rows="6" placeholder="Describe your recipe — ingredients, amounts, steps…"></textarea>
+          </div>
           <div class="transcript-actions">
             <button id="clear-btn">Clear</button>
             <button id="structure-btn" class="primary">Structure Recipe →</button>
@@ -128,6 +135,10 @@
               <option value="anthropic">Anthropic (Claude)</option>
               <option value="openrouter">OpenRouter</option>
             </select>
+            <p id="anthropic-cors-hint" class="hint hint-warn" hidden>
+              ⚠️ Direct Anthropic calls are blocked by browser CORS policy on hosted sites.
+              Use <strong>OpenRouter</strong> with an <code>sk-or-...</code> key — it supports all Claude models and works from any browser.
+            </p>
             <div id="model-group" hidden>
               <label for="model-input">Model</label>
               <input type="text" id="model-input" placeholder="anthropic/claude-sonnet" autocomplete="off" />

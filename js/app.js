@@ -25,6 +25,11 @@ const resultActions = $('result-actions');
 const saveRecipeBtn = $('save-recipe-btn');
 const shareRecipeBtn = $('share-recipe-btn');
 const tryAgainBtn = $('try-again-btn');
+const fallbackPanel = $('fallback-panel');
+const fallbackInput = $('fallback-input');
+const modelLoadingBar = $('model-loading-bar');
+const modelLoadingFill = $('model-loading-fill');
+const anthropicCorsHint = $('anthropic-cors-hint');
 
 const authOverlay = $('auth-overlay');
 const authForm = $('auth-form');
@@ -65,7 +70,9 @@ function init() {
 }
 
 function updateModelVisibility() {
-  modelGroup.hidden = providerSelect.value !== 'openrouter';
+  const isOpenRouter = providerSelect.value === 'openrouter';
+  modelGroup.hidden = !isOpenRouter;
+  anthropicCorsHint.hidden = isOpenRouter;
 }
 
 apiKeyInput.addEventListener('input', () => {
@@ -96,6 +103,8 @@ function initApp() {
 function enableRecording() {
   recordBtn.disabled = false;
   recordStatus.textContent = 'Press to start recording';
+  // Preload Whisper model in background so it is ready when the user records
+  recorder.loadModel();
 }
 
 function resolvedLang() {
@@ -117,13 +126,38 @@ saveKeyBtn.addEventListener('click', () => {
 langSelect.addEventListener('change', () => saveLang(langSelect.value));
 
 const recorder = new VoiceRecorder({
-  onTranscript: (text, isInterim) => {
+  onTranscript: (text) => {
     transcriptText.textContent = text;
     transcriptPanel.hidden = !text;
   },
   onStatusChange: (state, message) => {
     recordStatus.textContent = message;
+
+    const isProcessing = state === 'loading-model' || state === 'transcribing';
     recordBtn.classList.toggle('recording', state === 'recording');
+    if (getApiKey()) {
+      // Keep button enabled during recording (user needs to click to stop);
+      // disable only during post-recording processing
+      recordBtn.disabled = isProcessing && !recorder.isRecording;
+    }
+
+    // Show/hide the model download progress bar
+    if (state === 'loading-model') {
+      modelLoadingBar.hidden = false;
+      const match = message.match(/(\d+)%/);
+      if (match && modelLoadingFill) {
+        modelLoadingFill.style.width = match[1] + '%';
+      }
+    } else {
+      modelLoadingBar.hidden = true;
+      if (modelLoadingFill) modelLoadingFill.style.width = '0%';
+    }
+
+    if (state === 'error') {
+      transcriptPanel.hidden = false;
+      fallbackPanel.hidden = false;
+      fallbackInput.focus();
+    }
   },
 });
 
@@ -139,13 +173,17 @@ recordBtn.addEventListener('click', () => {
 clearBtn.addEventListener('click', () => {
   recorder.reset();
   transcriptText.textContent = '';
+  fallbackInput.value = '';
+  fallbackPanel.hidden = true;
   transcriptPanel.hidden = true;
   resultPanel.hidden = true;
   currentRecipe = null;
 });
 
 structureBtn.addEventListener('click', async () => {
-  const transcript = transcriptText.textContent.trim();
+  const voiceText = transcriptText.textContent.trim();
+  const typedText = fallbackInput.value.trim();
+  const transcript = voiceText || typedText;
   if (!transcript) return;
 
   const apiKey = getApiKey();
@@ -160,6 +198,7 @@ structureBtn.addEventListener('click', async () => {
   try {
     const provider = getProvider();
     const model = getModel() || null;
+    loading.querySelector('p').textContent = 'Structuring your recipe…';
     currentRecipe = await structureRecipe(transcript, apiKey, provider, model);
     const card = renderRecipeCard(currentRecipe);
     recipeOutput.appendChild(card);
